@@ -1,0 +1,10 @@
+{
+  "domain": "oadrtest",
+  "name": "oadrtest",
+  "codeowners": ["@lazlop"],
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/service",
+  "iot_class": "cloud_polling",
+  "quality_scale": "bronze",
+  "requirements": []
+}
