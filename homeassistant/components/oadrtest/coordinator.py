@@ -70,8 +70,10 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
                 hourly_df["end_time"] - hourly_df["end_time"].diff()
             )
             hourly_df = hourly_df.drop(index=0)
-            self.forecast_prices = hourly_df.set_index("start_time")
-            self.current_price = self.forecast_prices.iloc[0]["price"]
+            self.forecast_prices = hourly_df.set_index("start_time").to_dict(
+                orient="index"
+            )
+            self.current_price = hourly_df.iloc[0]["price"]
 
             return {
                 "current_price": self.current_price,
