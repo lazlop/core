@@ -1,0 +1,147 @@
+# Example Lovelace Dashboard for CalFlexHub Prices
+# To use this dashboard:
+# 1. Go to Configuration -> Lovelace Dashboards
+# 2. Click the "+" button to add a new dashboard
+# 3. Give it a name like "Energy Prices"
+# 4. Select "Create"
+# 5. Click on the three dots in the top right and select "Raw configuration editor"
+# 6. Paste the contents of this file
+# 7. Click "Save"
+
+title: Energy Prices
+views:
+  - title: CalFlexHub Prices
+    icon: mdi:flash
+    cards:
+      # Current Price Card
+      - type: gauge
+        name: Current Electricity Price
+        entity: sensor.cfh_price_summerhdp  # Replace with your actual entity ID
+        min: 0
+        max: 1
+        severity:
+          green: 0
+          yellow: 0.25
+          red: 0.5
+        unit: $/kWh
+
+      # Price Level Card
+      - type: entity
+        name: Price Level
+        entity: sensor.electricity_price_level  # This is the template sensor from the README
+        icon: mdi:chart-line
+
+      # Price History Card
+      - type: statistics-graph
+        title: Price History
+        entities:
+          - entity: sensor.cfh_price_summerhdp  # Replace with your actual entity ID
+            name: Electricity Price
+        stat_types:
+          - mean
+          - min
+          - max
+        period: day
+
+      # Price Forecast Card
+      - type: custom:apexcharts-card
+        header:
+          title: Price Forecast
+          show: true
+        graph_span: 24h
+        span:
+          start: day
+        series:
+          - entity: sensor.cfh_price_summerhdp  # Replace with your actual entity ID
+            name: Electricity Price
+            type: column
+            attribute: forecast
+            data_generator: |
+              return entity.attributes.forecast.map((item) => {
+                return [new Date(item.start_time).getTime(), item.price];
+              });
+            group_by:
+              func: max
+              duration: 1h
+
+      # Energy Usage vs. Price Card
+      - type: custom:mini-graph-card
+        name: Energy Usage vs. Price
+        entities:
+          - entity: sensor.energy_consumption  # Replace with your actual energy consumption entity
+            name: Energy Usage
+          - entity: sensor.cfh_price_summerhdp  # Replace with your actual entity ID
+            name: Electricity Price
+            y_axis: secondary
+        hours_to_show: 24
+        points_per_hour: 4
+        line_width: 2
+        hour24: true
+        show:
+          labels: true
+          points: false
+
+      # Energy Cost Estimation Card
+      - type: entities
+        title: Estimated Energy Costs
+        entities:
+          - entity: sensor.cfh_price_summerhdp  # Replace with your actual entity ID
+            name: Current Price
+          - entity: sensor.energy_consumption  # Replace with your actual energy consumption entity
+            name: Current Usage
+          - type: custom:template-entity-row
+            name: Estimated Hourly Cost
+            state: >
+              {{ (states('sensor.energy_consumption') | float * states('sensor.cfh_price_summerhdp') | float) | round(2) }} $
+          - type: custom:template-entity-row
+            name: Estimated Daily Cost
+            state: >
+              {{ (states('sensor.daily_energy_consumption') | float * states('sensor.cfh_price_summerhdp') | float) | round(2) }} $
+
+      # Price Alerts Card
+      - type: entities
+        title: Price Alerts
+        entities:
+          - type: custom:template-entity-row
+            name: Low Price Alert
+            state: >
+              {% if states('sensor.cfh_price_summerhdp') | float < 0.15 %}
+                Active
+              {% else %}
+                Inactive
+              {% endif %}
+            icon: >
+              {% if states('sensor.cfh_price_summerhdp') | float < 0.15 %}
+                mdi:bell-ring
+              {% else %}
+                mdi:bell-off
+              {% endif %}
+          - type: custom:template-entity-row
+            name: High Price Alert
+            state: >
+              {% if states('sensor.cfh_price_summerhdp') | float > 0.50 %}
+                Active
+              {% else %}
+                Inactive
+              {% endif %}
+            icon: >
+              {% if states('sensor.cfh_price_summerhdp') | float > 0.50 %}
+                mdi:bell-ring
+              {% else %}
+                mdi:bell-off
+              {% endif %}
+
+      # Manual Refresh Button
+      - type: button
+        name: Refresh Price Data
+        icon: mdi:refresh
+        tap_action:
+          action: call-service
+          service: cfh_prices.refresh_price_data
+          service_data:
+            entity_id: sensor.cfh_price_summerhdp  # Replace with your actual entity ID
+
+# Note: This dashboard uses some custom cards that you may need to install via HACS:
+# - apexcharts-card: https://github.com/RomRider/apexcharts-card
+# - mini-graph-card: https://github.com/kalkih/mini-graph-card
+# - template-entity-row: https://github.com/thomasloven/lovelace-template-entity-row

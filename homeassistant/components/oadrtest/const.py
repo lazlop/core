@@ -3,7 +3,8 @@
 # DOMAIN = "sensor"
 DOMAIN = "oadrtest"
 DEFAULT_NAME = "oadrtest"
-DEFAULT_SCAN_INTERVAL = 3600  # 1 hour
+DEFAULT_SCAN_INTERVAL = 60
+DEFAULT_URL = "https://api.olivineinc.com/i/lbnl/v1/prices/cfh/SummerHDP_MD/OpenADR3"
 
 # Available rate types
 RATE_TYPES = [
