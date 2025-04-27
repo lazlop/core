@@ -1,0 +1,30 @@
+template:
+  - sensor:
+      - name: "Hourly Cost"
+        unit_of_measurement: "$"
+        state: "{{ (states('sensor.energy_consumption') | float * states('sensor.cfh_price_2') | float) | round(2) }}"
+        icon: mdi:cash
+
+      - name: "Daily Cost"
+        unit_of_measurement: "$"
+        state: "{{ (states('sensor.daily_energy_consumption') | float * states('sensor.cfh_price_2') | float) | round(2) }}"
+        icon: mdi:cash-multiple
+
+  - binary_sensor:
+      - name: "Low Price Alert"
+        state: "{{ states('sensor.cfh_price_2') | float < 0.15 }}"
+        icon: >-
+          {% if is_state('binary_sensor.low_price_alert', 'on') %}
+            mdi:bell-ring
+          {% else %}
+            mdi:bell-off
+          {% endif %}
+
+      - name: "High Price Alert"
+        state: "{{ states('sensor.cfh_price_2') | float > 0.50 }}"
+        icon: >-
+          {% if is_state('binary_sensor.high_price_alert', 'on') %}
+            mdi:bell-ring
+          {% else %}
+            mdi:bell-off
+          {% endif %}

@@ -65,7 +65,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             interval_prices = self._simplify_price_dict(price_dict)
             df = pd.DataFrame(interval_prices)
             df["end_time"] = start_ts + df.duration.cumsum()
-            hourly_df = df.set_index("end_time").resample("60T").bfill().reset_index()
+            hourly_df = df.set_index("end_time").resample("60min").bfill().reset_index()
             hourly_df["start_time"] = (
                 hourly_df["end_time"] - hourly_df["end_time"].diff()
             )

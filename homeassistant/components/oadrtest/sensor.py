@@ -6,7 +6,6 @@ from typing import Any
 
 import aiohttp
 import async_timeout
-from isodate import parse_duration
 import pandas as pd
 
 from homeassistant.components.sensor import SensorEntity
