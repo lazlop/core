@@ -15,36 +15,6 @@ views:
           red: 0.5
         unit: $/kWh
 
-      # # Price History Card
-      # - type: statistics-graph
-      #   title: Price History
-      #   entities:
-      #     - entity: sensor.cfh_price_2
-      #       name: Electricity Price
-      #   stat_types:
-      #     - mean
-      #     - min
-      #     - max
-      #   period: day
-
-      # Price Forecast Card (using history-graph instead of apexcharts)
-      - type: history-graph
-        title: Past Prices
-        hours_to_show: 24
-        entities:
-          - entity: sensor.cfh_price_2
-            name: Electricity Price
-
-      # # Manual Refresh Button
-      # - type: button
-      #   name: Refresh Price Data
-      #   icon: mdi:refresh
-      #   tap_action:
-      #     action: call-service
-      #     service: cfh_prices.refresh_price_data
-      #     service_data:
-      #       entity_id: sensor.cfh_price_2
-
       - type: custom:apexcharts-card
         experimental:
           color_threshold: true

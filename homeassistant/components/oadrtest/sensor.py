@@ -88,4 +88,18 @@ class CFHPricesSensor(SensorEntity):
 
         forecast_prices = self.coordinator.data.get("forecast_prices", {})
         # print(forecast_prices)
-        return {"forecast": forecast_prices}
+        forecast_data = []
+        for timestamp, data in forecast_prices.items():
+            forecast_data.append(
+                {
+                    "start_time": timestamp.isoformat(),
+                    "end_time": data.get("end_time").isoformat(),
+                    "price": data.get("price"),
+                }
+            )
+        # print(forecast_data)
+
+        # also gonna add a fake time
+        fake_time = self.coordinator.data.get("fake_time")
+
+        return {"forecast": forecast_data, "fake_time": fake_time}
