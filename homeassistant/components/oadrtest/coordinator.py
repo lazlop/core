@@ -8,7 +8,7 @@ import aiohttp
 import async_timeout
 from isodate import parse_duration
 import pandas as pd
-
+import requests
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CURRENCY_DOLLAR, UnitOfEnergy
@@ -19,7 +19,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, DEFAULT_URL
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, DEFAULT_URL, DEFAULT_SIGNAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,34 +55,57 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
 
     def _fetch_prices(self):
         """Fetch price data from the API."""
-        import requests
+        # just getting static price while developing, will switch this to be backup
+        # try:
+        #     r = requests.get(self.url)
+        #     price_dict = r.json()
 
-        try:
-            r = requests.get(self.url)
-            price_dict = r.json()
-            start_str = price_dict.get("intervalPeriod").get("start")
-            start_ts = pd.Timestamp(start_str)
-            interval_prices = self._simplify_price_dict(price_dict)
-            df = pd.DataFrame(interval_prices)
-            df["end_time"] = start_ts + df.duration.cumsum()
-            hourly_df = df.set_index("end_time").resample("60min").bfill().reset_index()
-            hourly_df["start_time"] = (
-                hourly_df["end_time"] - hourly_df["end_time"].diff()
-            )
-            hourly_df = hourly_df.drop(index=0)
-            self.forecast_prices = hourly_df.set_index("start_time").to_dict(
-                orient="index"
-            )
-            self.current_price = hourly_df.iloc[0]["price"]
+        # except requests.RequestException as err:
+        #     price_dict = DEFAULT_SIGNAL
+        price_dict = DEFAULT_SIGNAL
+        # Just using default signal right now
+        start_str = price_dict.get("intervalPeriod").get("start")
+        start_ts = pd.Timestamp(start_str)
+        interval_prices = self._simplify_price_dict(price_dict)
+        df = pd.DataFrame(interval_prices)
+        df["end_time"] = start_ts + df.duration.cumsum()
+        hourly_df = df.set_index("end_time").resample("60min").bfill().reset_index()
+        hourly_df["start_time"] = hourly_df["end_time"] - hourly_df["end_time"].diff()
+        hourly_df = hourly_df.drop(index=0)
+        self.forecast_prices = hourly_df.set_index("start_time").to_dict(orient="index")
+        self.current_price = hourly_df.iloc[0]["price"]
 
-            return {
-                "current_price": self.current_price,
-                "forecast_prices": self.forecast_prices,
-            }
+        return {
+            "current_price": self.current_price,
+            "forecast_prices": self.forecast_prices,
+        }
 
-        except requests.RequestException as err:
-            _LOGGER.error("Error fetching data: %s", err)
-            raise
+    def _post_prices(self):
+        """post prices to openadr vtn."""
+        # just getting static price while developing, will switch this to be backup
+        # try:
+        #     r = requests.get(self.url)
+        #     price_dict = r.json()
+
+        # except requests.RequestException as err:
+        #     price_dict = DEFAULT_SIGNAL
+        price_dict = DEFAULT_SIGNAL
+        # Just using default signal right now
+        start_str = price_dict.get("intervalPeriod").get("start")
+        start_ts = pd.Timestamp(start_str)
+        interval_prices = self._simplify_price_dict(price_dict)
+        df = pd.DataFrame(interval_prices)
+        df["end_time"] = start_ts + df.duration.cumsum()
+        hourly_df = df.set_index("end_time").resample("60min").bfill().reset_index()
+        hourly_df["start_time"] = hourly_df["end_time"] - hourly_df["end_time"].diff()
+        hourly_df = hourly_df.drop(index=0)
+        self.forecast_prices = hourly_df.set_index("start_time").to_dict(orient="index")
+        self.current_price = hourly_df.iloc[0]["price"]
+
+        return {
+            "current_price": self.current_price,
+            "forecast_prices": self.forecast_prices,
+        }
 
     def _simplify_price_dict(self, price_dict):
         """Simplify the price dictionary from the API response."""

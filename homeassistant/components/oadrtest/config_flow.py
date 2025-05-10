@@ -12,7 +12,7 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import DOMAIN
+from .const import DOMAIN, DEFAULT_URL, ITER_INTERVAL, DEFAULT_SIGNAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(
             CONF_NAME,
-            default="https://api.olivineinc.com/i/lbnl/v1/prices/cfh/SummerHDP_MD/OpenADR3",
+            default=DEFAULT_URL,
         ): str,
     }
 )
@@ -55,13 +55,8 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     # )
 
     hub = PlaceholderHub(data[CONF_NAME])
-    if (
-        data[CONF_NAME]
-        != "https://api.olivineinc.com/i/lbnl/v1/prices/cfh/SummerHDP_MD/OpenADR3"
-    ):
-        raise InvalidAuth(
-            "Conf_name should be https://api.olivineinc.com/i/lbnl/v1/prices/cfh/SummerHDP_MD/OpenADR3"
-        )
+    if data[CONF_NAME] != f"{DEFAULT_URL}":
+        raise InvalidAuth(f"Conf_name should be {DEFAULT_URL}")
 
     # If you cannot connect:
     # throw CannotConnect
