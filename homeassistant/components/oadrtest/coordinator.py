@@ -90,7 +90,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             )
             self.current_price = hourly_df.iloc[0]["price"]
 
-            fake_time = start_ts + self.get_hour()
+            fake_time = start_ts + timedelta(hours=self.get_hour())
 
             return {
                 "current_price": self.current_price,
