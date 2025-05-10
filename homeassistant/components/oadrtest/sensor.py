@@ -21,7 +21,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from .coordinator import CFHPricesDataUpdateCoordinator
 
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, DEFAULT_URL
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, DEFAULT_URL, ITER_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,7 +80,6 @@ class CFHPricesSensor(SensorEntity):
             self._coordinator.async_add_listener(self.async_write_ha_state)
         )
 
-
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional state attributes."""
@@ -89,17 +88,4 @@ class CFHPricesSensor(SensorEntity):
 
         forecast_prices = self.coordinator.data.get("forecast_prices", {})
         # print(forecast_prices)
-        forecast_data = []
-        for timestamp, data in forecast_prices.items():
-            forecast_data.append(
-                {
-                    "start_time": timestamp.isoformat(),
-                    "end_time": data.get("end_time").isoformat(),
-                    "price": data.get("price"),
-                }
-            )
-        # print(forecast_data)
-
-        return {
-            "forecast": forecast_data,
-        }
+        return {"forecast": forecast_prices}

@@ -1,6 +1,6 @@
 """Sensor platform for CalFlexHub Prices integration."""
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 import logging
 from typing import Any
 
@@ -19,7 +19,15 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, DEFAULT_URL, DEFAULT_SIGNAL
+from .const import (
+    DOMAIN,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_URL,
+    DEFAULT_SIGNAL,
+    ITER_INTERVAL,
+)
+from .vtn_comms import _create_pricing_event, _create_program, _delete_all_events
+import threading
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +41,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         self.hass = hass
         self.current_prices = None
         self.forecast_prices = None
+        self.start_time = datetime.now()
 
         super().__init__(
             hass,
@@ -40,6 +49,9 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             name=f"{DOMAIN}-{scan_interval}",
             update_interval=timedelta(seconds=scan_interval),
         )
+        # _create_program()
+        # thread = threading.Thread(target=_post_prices_with_threading, daemon=True)
+        # thread.start()
 
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
@@ -53,7 +65,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         except Exception as err:
             raise UpdateFailed(f"Error parsing data: {err}") from err
 
-    def _fetch_prices(self):
+    def _fetch_prices(self, current_time):
         """Fetch price data from the API."""
         # just getting static price while developing, will switch this to be backup
         # try:
@@ -64,21 +76,27 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         #     price_dict = DEFAULT_SIGNAL
         price_dict = DEFAULT_SIGNAL
         # Just using default signal right now
-        start_str = price_dict.get("intervalPeriod").get("start")
-        start_ts = pd.Timestamp(start_str)
-        interval_prices = self._simplify_price_dict(price_dict)
-        df = pd.DataFrame(interval_prices)
-        df["end_time"] = start_ts + df.duration.cumsum()
-        hourly_df = df.set_index("end_time").resample("60min").bfill().reset_index()
-        hourly_df["start_time"] = hourly_df["end_time"] - hourly_df["end_time"].diff()
-        hourly_df = hourly_df.drop(index=0)
-        self.forecast_prices = hourly_df.set_index("start_time").to_dict(orient="index")
-        self.current_price = hourly_df.iloc[0]["price"]
+
+        sped_up_hour = self.get_hour()
+        intervals = price_dict["intervals"]
+        updated_intervals = intervals[sped_up_hour:] + intervals[:sped_up_hour]
+        price_dict["intervals"] = updated_intervals
+
+        event_prices = []
+        for interval in price_dict.get("intervals", []):
+            for payload in interval.get("payloads", []):
+                if payload.get("type") == "PRICE" and payload.get("values"):
+                    event_prices.append(payload["values"][0])
 
         return {
-            "current_price": self.current_price,
-            "forecast_prices": self.forecast_prices,
+            "current_price": event_prices[0],
+            "forecast_prices": event_prices,
         }
+
+    def get_hour(self):
+        now = datetime.now()
+        sec = (now - self.start_time).seconds
+        return sec // ITER_INTERVAL % 24
 
     def _post_prices(self):
         """post prices to openadr vtn."""
@@ -91,40 +109,6 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         #     price_dict = DEFAULT_SIGNAL
         price_dict = DEFAULT_SIGNAL
         # Just using default signal right now
-        start_str = price_dict.get("intervalPeriod").get("start")
-        start_ts = pd.Timestamp(start_str)
-        interval_prices = self._simplify_price_dict(price_dict)
-        df = pd.DataFrame(interval_prices)
-        df["end_time"] = start_ts + df.duration.cumsum()
-        hourly_df = df.set_index("end_time").resample("60min").bfill().reset_index()
-        hourly_df["start_time"] = hourly_df["end_time"] - hourly_df["end_time"].diff()
-        hourly_df = hourly_df.drop(index=0)
-        self.forecast_prices = hourly_df.set_index("start_time").to_dict(orient="index")
-        self.current_price = hourly_df.iloc[0]["price"]
-
-        return {
-            "current_price": self.current_price,
-            "forecast_prices": self.forecast_prices,
-        }
-
-    def _simplify_price_dict(self, price_dict):
-        """Simplify the price dictionary from the API response."""
-        simple_prices = []
-        prices = price_dict.get("intervals")
-        duration = price_dict.get("intervalPeriod").get("duration")
-        simple_prices.append({"duration": pd.Timedelta(0)})
-
-        for i in prices:
-            if "payloads" in i and i["payloads"][0]["type"] == "PRICE":
-                if i.get("intervalPeriod"):
-                    payload_duration = i.get("intervalPeriod").get("duration")
-                    timedelta_duration = parse_duration(payload_duration)
-                else:
-                    timedelta_duration = parse_duration(duration)
-                simple_prices.append(
-                    {
-                        "duration": timedelta_duration,
-                        "price": i.get("payloads", [])[0]["values"][0],
-                    }
-                )
-        return simple_prices
+        price_dict["programID"] = "0"
+        _delete_all_events()
+        _create_pricing_event(price_dict, 0)
