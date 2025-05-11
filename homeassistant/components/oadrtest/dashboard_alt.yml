@@ -1,0 +1,49 @@
+# For if ROTATE_PRICES is true. 
+title: Energy Prices
+config_template_card_vars:
+  fake_time_ts: states['sensor.fake_time_ts'].state
+views:
+  - title: CalFlexHub Prices
+    icon: mdi:flash
+    cards:
+      - type: gauge
+        name: Current Electricity Price
+        entity: sensor.cfh_price_2
+        min: 0
+        max: 1
+        severity:
+          green: 0
+          yellow: 0.25
+          red: 0.5
+        unit: $/kWh
+      - type: custom:config-template-card
+        entities:
+          - sensor.cfh_price_2
+          - sensor.fake_price_ts
+        card:
+          type: custom:apexcharts-card
+          experimental:
+            color_threshold: true
+          header:
+            title: Price Forecast
+            show: true
+          graph_span: 24h
+          span:
+            start: hour
+          series:
+            - entity: sensor.cfh_price_2
+              name: Electricity Price
+              type: column
+              attribute: forecast
+              data_generator: |
+                return entity.attributes.forecast.map((item) => {
+                  // Ensure price is a number
+                  return [new Date(item.start_time), Number(item.price)];
+                });
+              color_threshold:
+                - value: 0
+                  color: '#4CAF50'
+                - value: 0.25
+                  color: '#FFC107'
+                - value: 0.5
+                  color: '#F44336'

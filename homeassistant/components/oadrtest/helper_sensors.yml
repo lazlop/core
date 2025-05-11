@@ -1,0 +1,7 @@
+# fake_time_ts is actually used for now bar
+fake_time_ts: >
+  {% set t = state_attr('sensor.cfh_price_2', 'fake_time') %}
+          {{ as_timestamp(t) * 1000 if t else 0 }}
+# fake_time not used
+fake_time: >
+  {{ state_attr('sensor.cfh_price_2', 'fake_time') }}

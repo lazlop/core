@@ -1,7 +1,8 @@
 """Constants for the oadrtest integration."""
 
 # MODES
-ROTATE_PRICES = True
+ROTATE_PRICES = False
+
 VTN_URL = "http://localhost:8080/openadr3/3.0.1"
 # DOMAIN = "sensor"
 DOMAIN = "oadrtest"
