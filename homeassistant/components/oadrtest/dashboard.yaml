@@ -62,6 +62,7 @@ views:
                       background: "#2196F3"
                       fontSize: "15px"
                     fontWeight: "bold"
+
         # apex_config:
         #   annotations:
         #     xaxis:
@@ -96,16 +97,16 @@ views:
         #   label: Now
         #   color: "#1E88E5"  # Bright blue color
 
-      - type: entities
-        title: Current Fake Time
-        entities:
-          - entity: sensor.cfh_fake_time
-            name: "Fake Time"
-      - type: entities
-        title: Current Fake Time TS
-        entities:
-          - entity: sensor.fake_time_ts
-            name: "Fake Time"
+      # - type: entities
+      #   title: Current Fake Time
+      #   entities:
+      #     - entity: sensor.cfh_fake_time
+      #       name: "Fake Time"
+      # - type: entities
+      #   title: Current Fake Time TS
+      #   entities:
+      #     - entity: sensor.fake_time_ts
+      #       name: "Fake Time"
 
         # expanding graph to make sure I'm not just missing the timestamp
         # graph_span: 48h

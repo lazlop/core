@@ -1,5 +1,8 @@
 """Constants for the oadrtest integration."""
 
+# MODES
+ROTATE_PRICES = True
+
 # DOMAIN = "sensor"
 DOMAIN = "oadrtest"
 DEFAULT_NAME = "oadrtest"

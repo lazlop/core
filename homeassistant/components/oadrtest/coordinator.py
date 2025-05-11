@@ -25,6 +25,7 @@ from .const import (
     DEFAULT_URL,
     DEFAULT_SIGNAL,
     ITER_INTERVAL,
+    ROTATE_PRICES,
 )
 from .vtn_comms import _create_pricing_event, _create_program, _delete_all_events
 import threading
@@ -82,7 +83,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             interval_prices = self._simplify_price_dict(price_dict)
             df = pd.DataFrame(interval_prices)
             df["end_time"] = start_ts + df.duration.cumsum()
-            hourly_df = df.set_index("end_time").resample("60T").bfill().reset_index()
+            hourly_df = df.set_index("end_time").resample("60min").bfill().reset_index()
             hourly_df["start_time"] = (
                 hourly_df["end_time"] - hourly_df["end_time"].diff()
             )
@@ -90,9 +91,12 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             self.forecast_prices = hourly_df.set_index("start_time").to_dict(
                 orient="index"
             )
-            self.current_price = hourly_df.iloc[0]["price"]
+            if ROTATE_PRICES:
+                self.current_price = hourly_df.iloc[0]["price"]
+            else:
+                self.current_price = hourly_df.iloc[self.get_hour()]["price"]
 
-            fake_time = start_ts + timedelta(hours=self.get_hour())
+            fake_time = start_ts + timedelta(hours=self.get_hour() + 1)
 
             return {
                 "current_price": self.current_price,
@@ -108,10 +112,11 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         """Simplify the price dictionary from the API response."""
         simple_prices = []
         prices = price_dict.get("intervals")
-        # rearrange prices based on time
-        new_start_hour = self.get_hour()
-        # Extract pricing data from the event
-        prices = prices[new_start_hour:] + prices[:new_start_hour]
+        if ROTATE_PRICES:
+            # rearrange prices based on time
+            new_start_hour = self.get_hour()
+            # Extract pricing data from the event
+            prices = prices[new_start_hour:] + prices[:new_start_hour]
 
         duration = price_dict.get("intervalPeriod").get("duration")
         simple_prices.append({"duration": pd.Timedelta(0)})
