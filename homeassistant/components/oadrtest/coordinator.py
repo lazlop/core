@@ -3,9 +3,9 @@
 from datetime import timedelta, datetime, timezone
 import logging
 from typing import Any
-
 import aiohttp
 import async_timeout
+import asyncio
 from isodate import parse_duration
 import pandas as pd
 import requests
@@ -43,7 +43,6 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         self.current_prices = None
         self.forecast_prices = None
         self.start_time = datetime.now()
-
         super().__init__(
             hass,
             _LOGGER,
@@ -51,9 +50,16 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             # update_interval=timedelta
             update_interval=timedelta(seconds=ITER_INTERVAL),
         )
-        # _create_program()
-        # thread = threading.Thread(target=_post_prices_with_threading, daemon=True)
-        # thread.start()
+        hass.async_create_task(self._post_prices())
+
+    # self._always_try_the_vtn()
+    
+    # def _always_try_the_vtn(self):
+    #     try:
+    #         await hass.async_create_task(self._post_prices())
+    #     except Exception as e:
+    #         print("exception")
+    #         self._always_try_the_vtn()
 
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
@@ -141,17 +147,22 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         sec = (now - self.start_time).seconds
         return sec // ITER_INTERVAL % 24
 
-    def _post_prices(self):
+    async def _post_prices(self):
         """post prices to openadr vtn."""
         # just getting static price while developing, will switch this to be backup
         # try:
         #     r = requests.get(self.url)
         #     price_dict = r.json()
 
+        await _create_program()
+        print('creating_pringram')
         # except requests.RequestException as err:
         #     price_dict = DEFAULT_SIGNAL
         price_dict = DEFAULT_SIGNAL
         # Just using default signal right now
         price_dict["programID"] = "0"
-        _delete_all_events()
-        _create_pricing_event(price_dict, 0)
+        while True:
+            await _delete_all_events()
+            await _create_pricing_event(price_dict, 0)
+            await asyncio.sleep(DEFAULT_SCAN_INTERVAL)
+            print('price_posted')

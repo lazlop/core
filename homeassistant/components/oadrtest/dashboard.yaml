@@ -42,11 +42,11 @@ views:
                   return [new Date(item.start_time), Number(item.price)];
                 });
               color_threshold:
-              - value: 0.3
+              - value: 0
                 color: "#4CAF50"   # Muted green for low price
-              - value: 0.4
+              - value: 0.25
                 color: "#FFC107"   # Muted amber for medium price
-              - value: 0.6
+              - value: 0.5
                 color: "#F44336"   # Muted red for high price
           apex_config:
             annotations:

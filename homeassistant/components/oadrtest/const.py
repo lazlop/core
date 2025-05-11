@@ -2,12 +2,12 @@
 
 # MODES
 ROTATE_PRICES = True
-
+VTN_ADDRESS = 
 # DOMAIN = "sensor"
 DOMAIN = "oadrtest"
 DEFAULT_NAME = "oadrtest"
-DEFAULT_SCAN_INTERVAL = 3600
 ITER_INTERVAL = 5
+DEFAULT_SCAN_INTERVAL = ITER_INTERVAL * 24
 DEFAULT_URL = "https://api.olivineinc.com/i/lbnl/v1/prices/cfh/SpringHDP/OpenADR3"
 OPENADR_VTN = ""
 
