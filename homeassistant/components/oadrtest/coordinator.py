@@ -1,6 +1,6 @@
 """Sensor platform for CalFlexHub Prices integration."""
 
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 import logging
 from typing import Any
 
@@ -72,10 +72,12 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             # r = requests.get(self.url)
             # price_dict = r.json()
+            # start_str = price_dict.get("intervalPeriod").get("start")
+
             price_dict = DEFAULT_SIGNAL
-            # Just using default signal right now
-            price_dict["programID"] = "0"
-            start_str = price_dict.get("intervalPeriod").get("start")
+            now = datetime.now(timezone.utc)
+            start_str = now.strftime("%Y-%m-%dT%H:00:00+00:00")
+
             start_ts = pd.Timestamp(start_str)
             interval_prices = self._simplify_price_dict(price_dict)
             df = pd.DataFrame(interval_prices)
@@ -95,7 +97,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             return {
                 "current_price": self.current_price,
                 "forecast_prices": self.forecast_prices,
-                "fake_time": fake_time,
+                "fake_time": fake_time.strftime("%Y-%m-%dT%H:00:00+00:00"),
             }
 
         except requests.RequestException as err:
@@ -107,9 +109,9 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         simple_prices = []
         prices = price_dict.get("intervals")
         # rearrange prices based on time
-        # new_start_hour = self.get_hour()
-        # # Extract pricing data from the event
-        # prices = prices[new_start_hour:] + prices[:new_start_hour]
+        new_start_hour = self.get_hour()
+        # Extract pricing data from the event
+        prices = prices[new_start_hour:] + prices[:new_start_hour]
 
         duration = price_dict.get("intervalPeriod").get("duration")
         simple_prices.append({"duration": pd.Timedelta(0)})
