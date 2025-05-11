@@ -1,4 +1,6 @@
 title: Energy Prices
+config_template_card_vars:
+  fake_time_ts: states['sensor.fake_time_ts'].state
 views:
   - title: CalFlexHub Prices
     icon: mdi:flash
@@ -14,51 +16,57 @@ views:
           yellow: 0.25
           red: 0.5
         unit: $/kWh
-      - type: custom:apexcharts-card
-        experimental:
-          color_threshold: true
-        header:
-          title: Price Forecast
-          show: true
-        graph_span: 24h
-        span:
-          start: hour
-        series:
-          - entity: sensor.cfh_price_2
-            name: Electricity Price
-            type: column
-            # time_delta: -12h
-            attribute: forecast
-            data_generator: |
-              return entity.attributes.forecast.map((item) => {
-                // Ensure price is a number
-                return [new Date(item.start_time), Number(item.price)];
-              });
-            color_threshold:
-            - value: 0.3
-              color: "#4CAF50"   # Muted green for low price
-            - value: 0.4
-              color: "#FFC107"   # Muted amber for medium price
-            - value: 0.6
-              color: "#F44336"   # Muted red for high price
-        apex_config:
-          annotations:
-            xaxis:
-              - x: "[[entity.sensor.cfh_fake_time_ts]]"
-                borderColor: "#2196F3"
-                borderWidth: 4
-                strokeDashArray: 0
-                label:
-                  text: "Now"
-                  style:
-                    color: "#fff"
-                    background: "#2196F3"
-                    fontSize: "15px"
+      - type: custom:config-template-card
+        entities:
+          - sensor.cfh_price_2
+          - sensor.fake_price_ts
+        card:
+          type: custom:apexcharts-card
+          experimental:
+            color_threshold: true
+          header:
+            title: Price Forecast
+            show: true
+          graph_span: 24h
+          span:
+            start: hour
+          series:
+            - entity: sensor.cfh_price_2
+              name: Electricity Price
+              type: column
+              # time_delta: -12h
+              attribute: forecast
+              data_generator: |
+                return entity.attributes.forecast.map((item) => {
+                  // Ensure price is a number
+                  return [new Date(item.start_time), Number(item.price)];
+                });
+              color_threshold:
+              - value: 0.3
+                color: "#4CAF50"   # Muted green for low price
+              - value: 0.4
+                color: "#FFC107"   # Muted amber for medium price
+              - value: 0.6
+                color: "#F44336"   # Muted red for high price
+          apex_config:
+            annotations:
+              xaxis:
+                - x: ${ states['sensor.fake_time_ts'].state }
+                  borderColor: "#2196F3"
+                  borderWidth: 4
+                  strokeDashArray: 0
+                  label:
+                    text: "Now"
+                    style:
+                      color: "#fff"
+                      background: "#2196F3"
+                      fontSize: "15px"
                     fontWeight: "bold"
         # apex_config:
         #   annotations:
         #     xaxis:
-        #       - x: "1746972000000.0"
+        #       - x: EVAL:new Date().setHours(23,0,0)
+        #         x2: EVAL:new Date().setHours(24,0,0)
         #         borderColor: "#2196F3"
         #         borderWidth: 4
         #         strokeDashArray: 0   # Solid line; change if you prefer dashed
