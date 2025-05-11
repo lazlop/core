@@ -2,7 +2,7 @@
 
 # MODES
 ROTATE_PRICES = True
-VTN_ADDRESS = 
+VTN_URL = "http://localhost:8080/openadr3/3.0.1"
 # DOMAIN = "sensor"
 DOMAIN = "oadrtest"
 DEFAULT_NAME = "oadrtest"

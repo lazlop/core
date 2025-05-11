@@ -3,7 +3,7 @@ import asyncio
 
 from datetime import datetime, timedelta
 
-from .const import VTN_ADDRESS
+from .const import VTN_URL
 
 HEADERS = {"Content-type": "application/json", "Authorization": "Bearer bl_token"}
 
