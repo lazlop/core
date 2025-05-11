@@ -14,6 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CURRENCY_DOLLAR, UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -50,7 +51,12 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             # update_interval=timedelta
             update_interval=timedelta(seconds=ITER_INTERVAL),
         )
-        hass.async_create_task(self._post_prices())
+        async_track_time_interval(
+            hass,
+            self._post_prices,  # Make sure this is a bound method
+            timedelta(seconds=DEFAULT_SCAN_INTERVAL)
+        )
+        
 
     # self._always_try_the_vtn()
     
@@ -161,8 +167,11 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         price_dict = DEFAULT_SIGNAL
         # Just using default signal right now
         price_dict["programID"] = "0"
-        while True:
-            await _delete_all_events()
-            await _create_pricing_event(price_dict, 0)
-            await asyncio.sleep(DEFAULT_SCAN_INTERVAL)
-            print('price_posted')
+        await _delete_all_events()
+        await _create_pricing_event(price_dict, 0)
+        print('price_posted')
+        # while True:
+        #     await _delete_all_events()
+        #     await _create_pricing_event(price_dict, 0)
+        #     await asyncio.sleep(DEFAULT_SCAN_INTERVAL)
+        #     print('price_posted')
