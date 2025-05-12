@@ -53,7 +53,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         )
         async_track_time_interval(
             hass,
-            self._post_prices,  # Make sure this is a bound method
+            self._post_prices, 
             timedelta(seconds=DEFAULT_SCAN_INTERVAL)
         )
         
@@ -153,7 +153,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         sec = (now - self.start_time).seconds
         return sec // ITER_INTERVAL % 24
 
-    async def _post_prices(self):
+    async def _post_prices(self, now = None):
         """post prices to openadr vtn."""
         # just getting static price while developing, will switch this to be backup
         # try:
