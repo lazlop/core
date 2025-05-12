@@ -51,6 +51,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             # update_interval=timedelta
             update_interval=timedelta(seconds=ITER_INTERVAL),
         )
+        hass.async_create_task(self._post_prices())
         async_track_time_interval(
             hass,
             self._post_prices, 
