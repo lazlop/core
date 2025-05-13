@@ -162,8 +162,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
 
     def get_hour(self):
         now = datetime.now()
-        sec = (now - self.start_time).seconds
-        return sec // ITER_INTERVAL % 24
+        return now.timestamp() // 5 % 24
 
     async def _post_prices(self, now = None):
         """post prices to openadr vtn."""
