@@ -1,5 +1,5 @@
 """Sensor platform for CalFlexHub Prices integration."""
-
+import pytz
 from datetime import timedelta, datetime, timezone
 import logging
 from typing import Any
@@ -27,6 +27,7 @@ from .const import (
     DEFAULT_SIGNAL,
     ITER_INTERVAL,
     ROTATE_PRICES,
+    FORECAST_FROM_0
 )
 from .vtn_comms import _create_pricing_event, _create_program, _delete_all_events
 import threading
@@ -89,9 +90,15 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             # start_str = price_dict.get("intervalPeriod").get("start")
 
             price_dict = DEFAULT_SIGNAL
-            now = datetime.now(timezone.utc)
-            start_str = now.strftime("%Y-%m-%dT%H:00:00+00:00")
 
+            if FORECAST_FROM_0:
+                now = datetime.now().astimezone(pytz.timezone('US/Pacific'))
+                now = now.replace(hour = 0)
+                now = now.astimezone(pytz.utc)
+            else:
+                now = datetime.now(timezone.utc)
+            
+            start_str = now.strftime("%Y-%m-%dT%H:00:00+00:00")
             start_ts = pd.Timestamp(start_str)
             interval_prices = self._simplify_price_dict(price_dict)
             df = pd.DataFrame(interval_prices)

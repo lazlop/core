@@ -1,0 +1,117 @@
+# for if ROTATE_PRICES is false
+title: Energy Prices
+config_template_card_vars:
+  fake_time_ts: states['sensor.fake_time_ts'].state
+views:
+  - title: CalFlexHub Prices
+    icon: mdi:flash
+    cards:
+      # Current Price Card
+      - type: gauge
+        name: Current Electricity Price
+        entity: sensor.cfh_price_2
+        min: 0
+        max: 1
+        severity:
+          green: 0
+          yellow: 0.25
+          red: 0.5
+        unit: $/kWh
+      - type: custom:config-template-card
+        entities:
+          - sensor.cfh_price_2
+          - sensor.fake_price_ts
+        card:
+          type: custom:apexcharts-card
+          experimental:
+            color_threshold: true
+          header:
+            title: Price Forecast
+            show: true
+          graph_span: 24h
+          span:
+            start: day
+          series:
+            - entity: sensor.cfh_price_2
+              name: Electricity Price
+              type: column
+              # time_delta: -12h
+              attribute: forecast
+              data_generator: |
+                return entity.attributes.forecast.map((item) => {
+                  // Ensure price is a number
+                  return [new Date(item.start_time), Number(item.price)];
+                });
+              color_threshold:
+              - value: 0
+                color: "#4CAF50"   # Muted green for low price
+              - value: 0.25
+                color: "#FFC107"   # Muted amber for medium price
+              - value: 0.5
+                color: "#F44336"   # Muted red for high price
+          apex_config:
+            annotations:
+              xaxis:
+                - x: ${ states['sensor.fake_time_ts'].state }
+                  borderColor: "#2196F3"
+                  borderWidth: 4
+                  strokeDashArray: 0
+                  label:
+                    text: "Now"
+                    style:
+                      color: "#fff"
+                      background: "#2196F3"
+                      fontSize: "15px"
+                    fontWeight: "bold"
+
+        # apex_config:
+        #   annotations:
+        #     xaxis:
+        #       - x: EVAL:new Date().setHours(23,0,0)
+        #         x2: EVAL:new Date().setHours(24,0,0)
+        #         borderColor: "#2196F3"
+        #         borderWidth: 4
+        #         strokeDashArray: 0   # Solid line; change if you prefer dashed
+        #         label:
+        #           text: "Now"
+        #           style:
+        #             color: "#fff"
+        #             background: "#2196F3"
+        #             fontSize: "15px"
+        #             fontWeight: "bold"
+        # apex_config:
+        #   annotations:
+        #     xaxis:
+        #       - x: EVAL:new Date().setHours(23,0,0)
+        #         borderColor: "#2196F3"
+        #         borderWidth: 4
+        #         strokeDashArray: 0   # Solid line; change if you prefer dashed
+        #         label:
+        #           text: "Now"
+        #           style:
+        #             color: "#fff"
+        #             background: "#2196F3"
+        #             fontSize: "15px"
+        #             fontWeight: "bold"
+        # now:
+        #   show: true
+        #   label: Now
+        #   color: "#1E88E5"  # Bright blue color
+
+      # - type: entities
+      #   title: Current Fake Time
+      #   entities:
+      #     - entity: sensor.cfh_fake_time
+      #       name: "Fake Time"
+      # - type: entities
+      #   title: Current Fake Time TS
+      #   entities:
+      #     - entity: sensor.fake_time_ts
+      #       name: "Fake Time"
+        # Could alternatively put in core/config/www/file.svg and access as /local/file.svg
+
+        # expanding graph to make sure I'm not just missing the timestamp
+        # graph_span: 48h
+        # span:
+        #   start: hour
+        #   offset: -12h
