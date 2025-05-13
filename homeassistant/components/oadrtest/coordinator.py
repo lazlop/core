@@ -162,7 +162,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
 
     def get_hour(self):
         now = datetime.now()
-        return now.timestamp() // 5 % 24
+        return int(now.timestamp() // 5 % 24)
 
     async def _post_prices(self, now = None):
         """post prices to openadr vtn."""
@@ -172,7 +172,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         #     price_dict = r.json()
 
         await _create_program()
-        print('creating_pringram')
+#        print('creating_pringram')
         # except requests.RequestException as err:
         #     price_dict = DEFAULT_SIGNAL
         price_dict = DEFAULT_SIGNAL
@@ -180,7 +180,7 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
         price_dict["programID"] = "0"
         await _delete_all_events()
         await _create_pricing_event(price_dict, 0)
-        print('price_posted')
+#         print('price_posted')
         # while True:
         #     await _delete_all_events()
         #     await _create_pricing_event(price_dict, 0)
