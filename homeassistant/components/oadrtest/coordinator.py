@@ -27,7 +27,8 @@ from .const import (
     DEFAULT_SIGNAL,
     ITER_INTERVAL,
     ROTATE_PRICES,
-    FORECAST_FROM_0
+    FORECAST_FROM_0,
+    AS_PST
 )
 from .vtn_comms import _create_pricing_event, _create_program, _delete_all_events
 import threading
@@ -92,7 +93,10 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
             price_dict = DEFAULT_SIGNAL
 
             if FORECAST_FROM_0:
-                now = datetime.now().astimezone(pytz.timezone('US/Pacific'))
+                if AS_PST:
+                    now = datetime.now().astimezone(pytz.timezone('US/Pacific'))
+                else:
+                    now = datetime.now().astimezone()
                 now = now.replace(hour = 0)
                 now = now.astimezone(pytz.utc)
             else:
