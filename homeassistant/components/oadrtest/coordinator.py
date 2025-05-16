@@ -119,7 +119,10 @@ class CFHPricesDataUpdateCoordinator(DataUpdateCoordinator):
                 self.current_price = hourly_df.iloc[0]["price"]
             else:
                 self.current_price = hourly_df.iloc[self.get_hour()]["price"]
-
+            # if FORECAST_FROM_0:
+            #     df['time'] = df.index.time
+            #     df.sort_values(by = 'time', inplace = True)
+            
             fake_time = start_ts + timedelta(hours=self.get_hour())
 
             return {
